@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { BloodSugarReading, BLOOD_SUGAR_THRESHOLDS } from "@/types";
+import { BloodSugarReading, BLOOD_SUGAR_THRESHOLDS, Medication, UserProfile } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 
@@ -9,6 +9,11 @@ interface BloodSugarContextType {
   addReading: (reading: Omit<BloodSugarReading, "id" | "status">) => void;
   deleteReading: (id: string) => void;
   loading: boolean;
+  medications: Medication[];
+  addMedication: (medication: Omit<Medication, "id">) => void;
+  userProfile: UserProfile;
+  updateUserProfile: (profile: UserProfile) => void;
+  reminders: Medication[];
 }
 
 const BloodSugarContext = createContext<BloodSugarContextType | undefined>(undefined);
@@ -25,21 +30,41 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
   children 
 }) => {
   const [readings, setReadings] = useState<BloodSugarReading[]>([]);
+  const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: "John Doe"
+  });
+
+  // Medications due today are considered reminders
+  const reminders = medications.filter(med => {
+    // In a real app, we would check if the medication is due today
+    return true;
+  });
 
   useEffect(() => {
     // Load saved readings from localStorage
-    const loadReadings = () => {
+    const loadData = () => {
       try {
         const savedReadings = localStorage.getItem("bloodSugarReadings");
         if (savedReadings) {
           setReadings(JSON.parse(savedReadings));
         }
+
+        const savedMedications = localStorage.getItem("medications");
+        if (savedMedications) {
+          setMedications(JSON.parse(savedMedications));
+        }
+
+        const savedUserProfile = localStorage.getItem("userProfile");
+        if (savedUserProfile) {
+          setUserProfile(JSON.parse(savedUserProfile));
+        }
       } catch (error) {
-        console.error("Failed to load readings:", error);
+        console.error("Failed to load data:", error);
         toast({
           title: "Error",
-          description: "Failed to load your saved readings.",
+          description: "Failed to load your saved data.",
           variant: "destructive",
         });
       } finally {
@@ -47,7 +72,7 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
-    loadReadings();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -56,6 +81,20 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("bloodSugarReadings", JSON.stringify(readings));
     }
   }, [readings, loading]);
+
+  useEffect(() => {
+    // Save medications to localStorage whenever they change
+    if (!loading) {
+      localStorage.setItem("medications", JSON.stringify(medications));
+    }
+  }, [medications, loading]);
+
+  useEffect(() => {
+    // Save user profile to localStorage whenever it changes
+    if (!loading) {
+      localStorage.setItem("userProfile", JSON.stringify(userProfile));
+    }
+  }, [userProfile, loading]);
 
   const determineStatus = (value: number): 'normal' | 'high' | 'low' => {
     if (value < BLOOD_SUGAR_THRESHOLDS.LOW) return 'low';
@@ -101,13 +140,40 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  const addMedication = (medicationData: Omit<Medication, "id">) => {
+    const newMedication: Medication = {
+      ...medicationData,
+      id: crypto.randomUUID()
+    };
+
+    setMedications(prev => [...prev, newMedication]);
+    
+    toast({
+      title: "Medication Added",
+      description: `${medicationData.name} has been added to your medications.`,
+    });
+  };
+
+  const updateUserProfile = (profile: UserProfile) => {
+    setUserProfile(profile);
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been updated successfully.",
+    });
+  };
+
   return (
     <BloodSugarContext.Provider
       value={{
         readings,
         addReading,
         deleteReading,
-        loading
+        loading,
+        medications,
+        addMedication,
+        userProfile,
+        updateUserProfile,
+        reminders
       }}
     >
       {children}

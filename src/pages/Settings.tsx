@@ -1,15 +1,37 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Save, User, Mail, Clock, Bell } from "lucide-react";
+import { useBloodSugar } from "@/context/BloodSugarContext";
+import { toast } from "@/components/ui/use-toast";
 
 const Settings = () => {
   const navigate = useNavigate();
-  // Mock state for settings - in a real app these would be persisted
-  const [darkMode, setDarkMode] = useState(false);
-  const [mgdl, setMgdl] = useState(true);
-  const [notifications, setNotifications] = useState(true);
+  const { userProfile, updateUserProfile, reminders } = useBloodSugar();
   
+  const [name, setName] = useState(userProfile.name);
+  const [email, setEmail] = useState(userProfile.email || "");
+  const [age, setAge] = useState(userProfile.age?.toString() || "");
+  const [caregiverEmail, setCaregiverEmail] = useState(userProfile.caregiverEmail || "");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [shareToCaregivers, setShareToCaregivers] = useState(true);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    updateUserProfile({
+      name,
+      email: email || undefined,
+      age: age ? parseInt(age) : undefined,
+      caregiverEmail: caregiverEmail || undefined
+    });
+    
+    toast({
+      title: "Settings Saved",
+      description: "Your settings have been updated successfully."
+    });
+  };
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -24,85 +46,176 @@ const Settings = () => {
         <div className="w-5"></div>
       </header>
 
-      <main className="app-content animate-fade-in">
-        <div className="mb-6">
-          <h2 className="text-lg font-medium mb-4">App Settings</h2>
-          
-          <div className="bg-white rounded-lg border border-app-secondary divide-y">
-            <div className="p-4 flex justify-between items-center">
-              <div className="flex items-center">
-                {darkMode ? (
-                  <Moon className="w-5 h-5 mr-3 text-app-primary" />
-                ) : (
-                  <Sun className="w-5 h-5 mr-3 text-app-primary" />
-                )}
-                <span>Dark Mode</span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={darkMode}
-                  onChange={() => setDarkMode(!darkMode)}
+      <main className="app-content pb-20">
+        <form onSubmit={handleSubmit} className="animate-fade-in">
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-4">Profile Information</h2>
+            
+            <div className="input-group mb-4">
+              <label className="input-label">Your Name</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  className="input-field pl-9"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
                 />
-                <div className="w-11 h-6 bg-app-secondary rounded-full peer peer-checked:bg-app-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-              </label>
+                <User className="absolute left-3 top-3 w-4 h-4 text-app-muted" />
+              </div>
             </div>
             
-            <div className="p-4 flex justify-between items-center">
+            <div className="input-group mb-4">
+              <label className="input-label">Email Address</label>
+              <div className="relative">
+                <input
+                  type="email"
+                  className="input-field pl-9"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your email"
+                />
+                <Mail className="absolute left-3 top-3 w-4 h-4 text-app-muted" />
+              </div>
+            </div>
+            
+            <div className="input-group">
+              <label className="input-label">Age</label>
+              <input
+                type="number"
+                className="input-field"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Your age"
+              />
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-4">Caregiver Settings</h2>
+            
+            <div className="input-group mb-4">
+              <label className="input-label">Caregiver Email</label>
+              <div className="relative">
+                <input
+                  type="email"
+                  className="input-field pl-9"
+                  value={caregiverEmail}
+                  onChange={(e) => setCaregiverEmail(e.target.value)}
+                  placeholder="Caregiver's email"
+                />
+                <Mail className="absolute left-3 top-3 w-4 h-4 text-app-muted" />
+              </div>
+              <p className="text-xs text-app-muted mt-1">
+                Your caregiver will be notified about abnormal readings
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-between py-2">
               <div>
-                <span>Blood Sugar Unit</span>
-                <p className="text-xs text-app-muted mt-1">
-                  {mgdl ? "mg/dL (US)" : "mmol/L (International)"}
+                <p className="font-medium">Share Readings with Caregiver</p>
+                <p className="text-xs text-app-muted">
+                  Allow your caregiver to view your readings
                 </p>
               </div>
-              <div className="flex border rounded-md overflow-hidden">
-                <button 
-                  className={`px-3 py-1 text-sm ${mgdl ? 'bg-app-primary text-white' : 'bg-app-secondary'}`}
-                  onClick={() => setMgdl(true)}
-                >
-                  mg/dL
-                </button>
-                <button 
-                  className={`px-3 py-1 text-sm ${!mgdl ? 'bg-app-primary text-white' : 'bg-app-secondary'}`}
-                  onClick={() => setMgdl(false)}
-                >
-                  mmol/L
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-4 flex justify-between items-center">
-              <div>
-                <span>Notifications</span>
-                <p className="text-xs text-app-muted mt-1">Remind you to check your blood sugar</p>
-              </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={notifications}
-                  onChange={() => setNotifications(!notifications)}
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={shareToCaregivers}
+                  onChange={() => setShareToCaregivers(!shareToCaregivers)}
                 />
-                <div className="w-11 h-6 bg-app-secondary rounded-full peer peer-checked:bg-app-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-app-primary"></div>
               </label>
             </div>
           </div>
-        </div>
-        
-        <div className="mb-6">
-          <h2 className="text-lg font-medium mb-4">About</h2>
           
-          <div className="bg-white rounded-lg border border-app-secondary p-4">
-            <h3 className="font-medium mb-2">Blood Sugar Tracker</h3>
-            <p className="text-sm text-app-muted mb-3">Version 1.0.0</p>
-            <p className="text-sm">A simple application to help you track and monitor your blood sugar levels.</p>
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-4">Notifications</h2>
+            
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="font-medium">Enable Notifications</p>
+                <p className="text-xs text-app-muted">
+                  Receive reminders and alerts
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={notificationsEnabled}
+                  onChange={() => setNotificationsEnabled(!notificationsEnabled)}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-app-primary"></div>
+              </label>
+            </div>
+            
+            {reminders.length > 0 && notificationsEnabled && (
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-2">Medication Reminders</p>
+                <div className="space-y-2">
+                  {reminders.map(med => (
+                    <div key={med.id} className="flex items-center justify-between p-3 bg-white border border-app-secondary rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{med.name}</p>
+                        <p className="text-xs text-app-muted">{med.dosage}</p>
+                      </div>
+                      <div className="flex items-center text-xs">
+                        <Clock className="w-3 h-3 mr-1 text-app-muted" />
+                        <span>{med.time}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-        
-        <button className="w-full py-3 mt-4 bg-app-secondary text-app-text font-medium rounded-md">
-          Clear All Data
-        </button>
+          
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-4">App Settings</h2>
+            
+            <div className="input-group mb-4">
+              <label className="input-label">Units</label>
+              <select className="select-field">
+                <option value="mg/dL">mg/dL (US)</option>
+                <option value="mmol/L">mmol/L (International)</option>
+              </select>
+            </div>
+            
+            <div className="input-group">
+              <label className="input-label">Target Range</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-app-muted">Low</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    defaultValue={BLOOD_SUGAR_THRESHOLDS.LOW}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-app-muted">High</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    defaultValue={BLOOD_SUGAR_THRESHOLDS.HIGH}
+                    disabled
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-app-muted mt-1">
+                Default target range for blood sugar readings
+              </p>
+            </div>
+          </div>
+          
+          <button type="submit" className="btn-primary">
+            <Save className="w-4 h-4 mr-2" />
+            Save Settings
+          </button>
+        </form>
       </main>
 
       <footer className="app-footer">

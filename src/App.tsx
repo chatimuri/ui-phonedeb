@@ -11,6 +11,8 @@ import History from "@/pages/History";
 import Detail from "@/pages/Detail";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
+import Notifications from "@/pages/Notifications";
+import CaregiverDashboard from "@/pages/CaregiverDashboard";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,8 @@ const App = () => (
             <Route path="/history" element={<History />} />
             <Route path="/detail/:id" element={<Detail />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/caregiver-dashboard" element={<CaregiverDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -2,13 +2,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, PlusCircle } from "lucide-react";
+import { 
+  CalendarIcon, 
+  Clock, 
+  PlusCircle, 
+  Bell, 
+  Activity, 
+  Pill, 
+  Dumbbell 
+} from "lucide-react";
 import { useBloodSugar } from "@/context/BloodSugarContext";
 import { cn } from "@/lib/utils";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { readings, loading } = useBloodSugar();
+  const { readings, loading, userProfile, reminders } = useBloodSugar();
   const [filter, setFilter] = useState<"all" | "high" | "low" | "normal">("all");
   
   const filteredReadings = readings.filter(reading => {
@@ -27,6 +35,17 @@ const Home = () => {
     }
   };
 
+  const getStatusBg = (status: string) => {
+    switch (status) {
+      case "high":
+        return "bg-app-danger/10";
+      case "low":
+        return "bg-app-warning/10";
+      default:
+        return "bg-app-success/10";
+    }
+  };
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -41,6 +60,104 @@ const Home = () => {
       </header>
 
       <main className="app-content">
+        {/* Welcome section */}
+        <div className="bg-gradient-to-r from-app-primary/10 to-app-primary/5 p-4 rounded-xl mb-6 animate-fade-in">
+          <h2 className="text-lg font-medium mb-1">Welcome, {userProfile.name}!</h2>
+          <p className="text-sm text-app-muted">
+            {readings.length > 0 
+              ? "Here's your latest blood sugar information." 
+              : "Start tracking your blood sugar levels today."}
+          </p>
+        </div>
+
+        {/* Latest reading section */}
+        {readings.length > 0 && (
+          <div className={cn(
+            "relative p-5 rounded-xl mb-6 shadow-sm border animate-fade-in",
+            getStatusBg(readings[0].status)
+          )}>
+            <div className="absolute top-3 right-3">
+              <span className={cn(
+                "text-xs px-2 py-1 rounded-full font-medium",
+                readings[0].status === "high" ? "bg-app-danger/20 text-app-danger" :
+                readings[0].status === "low" ? "bg-app-warning/20 text-app-warning" :
+                "bg-app-success/20 text-app-success"
+              )}>
+                {readings[0].status.toUpperCase()}
+              </span>
+            </div>
+            <h3 className="text-sm font-medium mb-1 text-app-muted">Latest Reading</h3>
+            <div className="flex items-end gap-1 mb-2">
+              <span className={cn("text-3xl font-bold", getStatusColor(readings[0].status))}>
+                {readings[0].value}
+              </span>
+              <span className="text-app-muted text-sm mb-1">mg/dL</span>
+            </div>
+            <div className="flex items-center text-xs text-app-muted">
+              <Clock className="w-3 h-3 mr-1" />
+              {readings[0].time}, {readings[0].date}
+            </div>
+          </div>
+        )}
+
+        {/* Quick actions */}
+        <div className="grid grid-cols-2 gap-3 mb-6 animate-fade-in">
+          <button
+            onClick={() => navigate("/entry")}
+            className="flex flex-col items-center p-4 bg-app-primary text-white rounded-xl shadow-sm"
+          >
+            <PlusCircle className="w-6 h-6 mb-2" />
+            <span className="text-sm font-medium">New Reading</span>
+          </button>
+          <button
+            onClick={() => navigate("/history")}
+            className="flex flex-col items-center p-4 bg-white border border-app-secondary rounded-xl shadow-sm"
+          >
+            <Activity className="w-6 h-6 mb-2 text-app-primary" />
+            <span className="text-sm font-medium">View History</span>
+          </button>
+        </div>
+
+        {/* Quick links */}
+        <div className="mb-6 animate-fade-in">
+          <h3 className="text-sm font-medium mb-3">Quick Links</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="flex items-center p-3 bg-white border border-app-secondary rounded-xl shadow-sm">
+              <Pill className="w-5 h-5 mr-3 text-app-primary" />
+              <span className="text-sm">Medications</span>
+            </button>
+            <button className="flex items-center p-3 bg-white border border-app-secondary rounded-xl shadow-sm">
+              <Dumbbell className="w-5 h-5 mr-3 text-app-primary" />
+              <span className="text-sm">Exercise</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Reminders */}
+        {reminders.length > 0 && (
+          <div className="mb-6 animate-fade-in">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-medium">Reminders</h3>
+              <button className="text-xs text-app-primary">View All</button>
+            </div>
+            <div className="space-y-2">
+              {reminders.map(med => (
+                <div key={med.id} className="flex items-center justify-between p-3 bg-white border border-app-secondary rounded-lg shadow-sm">
+                  <div>
+                    <p className="font-medium text-sm">{med.name}</p>
+                    <p className="text-xs text-app-muted">{med.dosage}</p>
+                  </div>
+                  <div className="flex items-center text-xs">
+                    <Clock className="w-3 h-3 mr-1 text-app-muted" />
+                    <span>{med.time}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent readings */}
         <div className="mb-6 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium">Recent Readings</h2>
@@ -74,7 +191,7 @@ const Home = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredReadings.slice(0, 10).map((reading, index) => (
+              {filteredReadings.slice(0, 5).map((reading, index) => (
                 <div
                   key={reading.id}
                   className={cn(
@@ -105,7 +222,7 @@ const Home = () => {
                 </div>
               ))}
               
-              {filteredReadings.length > 10 && (
+              {filteredReadings.length > 5 && (
                 <button
                   onClick={() => navigate("/history")}
                   className="w-full py-2 text-app-primary text-sm font-medium"
@@ -115,32 +232,6 @@ const Home = () => {
               )}
             </div>
           )}
-        </div>
-
-        <div className="mb-4 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-          <h2 className="text-lg font-medium mb-4">Stats</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white p-3 rounded-lg border border-app-secondary shadow-sm text-center">
-              <p className="text-xs text-app-muted mb-1">Readings</p>
-              <p className="font-bold">{readings.length}</p>
-            </div>
-            <div className="bg-white p-3 rounded-lg border border-app-secondary shadow-sm text-center">
-              <p className="text-xs text-app-muted mb-1">Average</p>
-              <p className="font-bold">
-                {readings.length > 0
-                  ? Math.round(
-                      readings.reduce((sum, r) => sum + r.value, 0) / readings.length
-                    )
-                  : "--"}
-              </p>
-            </div>
-            <div className="bg-white p-3 rounded-lg border border-app-secondary shadow-sm text-center">
-              <p className="text-xs text-app-muted mb-1">Last</p>
-              <p className="font-bold">
-                {readings.length > 0 ? readings[0].value : "--"}
-              </p>
-            </div>
-          </div>
         </div>
       </main>
 
