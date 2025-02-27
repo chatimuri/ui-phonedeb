@@ -1,238 +1,266 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
 import { 
-  CalendarIcon, 
-  Clock, 
-  PlusCircle, 
-  Bell, 
-  Activity, 
-  Pill, 
-  Dumbbell 
+  Plus, ChevronRight, Activity, TrendingUp, 
+  TrendingDown, Bell, User, Users
 } from "lucide-react";
 import { useBloodSugar } from "@/context/BloodSugarContext";
-import { cn } from "@/lib/utils";
+import { BLOOD_SUGAR_THRESHOLDS } from "@/types";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { readings, loading, userProfile, reminders } = useBloodSugar();
-  const [filter, setFilter] = useState<"all" | "high" | "low" | "normal">("all");
+  const { readings, userProfile, reminders } = useBloodSugar();
   
-  const filteredReadings = readings.filter(reading => {
-    if (filter === "all") return true;
-    return reading.status === filter;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "high":
-        return "text-app-danger";
-      case "low":
-        return "text-app-warning";
-      default:
-        return "text-app-success";
-    }
-  };
-
-  const getStatusBg = (status: string) => {
-    switch (status) {
-      case "high":
-        return "bg-app-danger/10";
-      case "low":
-        return "bg-app-warning/10";
-      default:
-        return "bg-app-success/10";
-    }
-  };
+  // Get the most recent reading
+  const latestReading = readings.length > 0 
+    ? readings[readings.length - 1] 
+    : null;
+  
+  // Calculate recent trends
+  const recentReadings = readings.slice(-5);
+  const hasHighReadings = recentReadings.some(r => r.status === "high");
+  const hasLowReadings = recentReadings.some(r => r.status === "low");
+  
+  // Count notifications (abnormal readings + medication reminders)
+  const abnormalReadings = readings.filter(r => r.status !== "normal").length;
+  const notificationCount = abnormalReadings + reminders.length;
 
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1 className="text-xl font-semibold">Blood Sugar Tracker</h1>
-        <button
-          onClick={() => navigate("/entry")}
-          className="text-app-primary"
-          aria-label="Add new reading"
-        >
-          <PlusCircle className="w-6 h-6" />
-        </button>
+        <div className="flex items-center">
+          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-app-primary">
+            {userProfile.name.charAt(0)}
+          </div>
+          <div className="ml-2">
+            <p className="text-sm font-medium">{userProfile.name}</p>
+          </div>
+        </div>
+        <div className="flex">
+          <button 
+            className="relative mr-1"
+            onClick={() => navigate("/notifications")}
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5 text-app-text" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-app-danger text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => navigate("/settings")}
+            aria-label="Settings"
+          >
+            <User className="w-5 h-5 text-app-text" />
+          </button>
+        </div>
       </header>
 
       <main className="app-content">
-        {/* Welcome section */}
-        <div className="bg-gradient-to-r from-app-primary/10 to-app-primary/5 p-4 rounded-xl mb-6 animate-fade-in">
-          <h2 className="text-lg font-medium mb-1">Welcome, {userProfile.name}!</h2>
-          <p className="text-sm text-app-muted">
-            {readings.length > 0 
-              ? "Here's your latest blood sugar information." 
-              : "Start tracking your blood sugar levels today."}
-          </p>
-        </div>
-
-        {/* Latest reading section */}
-        {readings.length > 0 && (
-          <div className={cn(
-            "relative p-5 rounded-xl mb-6 shadow-sm border animate-fade-in",
-            getStatusBg(readings[0].status)
-          )}>
-            <div className="absolute top-3 right-3">
-              <span className={cn(
-                "text-xs px-2 py-1 rounded-full font-medium",
-                readings[0].status === "high" ? "bg-app-danger/20 text-app-danger" :
-                readings[0].status === "low" ? "bg-app-warning/20 text-app-warning" :
-                "bg-app-success/20 text-app-success"
-              )}>
-                {readings[0].status.toUpperCase()}
-              </span>
-            </div>
-            <h3 className="text-sm font-medium mb-1 text-app-muted">Latest Reading</h3>
-            <div className="flex items-end gap-1 mb-2">
-              <span className={cn("text-3xl font-bold", getStatusColor(readings[0].status))}>
-                {readings[0].value}
-              </span>
-              <span className="text-app-muted text-sm mb-1">mg/dL</span>
-            </div>
-            <div className="flex items-center text-xs text-app-muted">
-              <Clock className="w-3 h-3 mr-1" />
-              {readings[0].time}, {readings[0].date}
-            </div>
-          </div>
-        )}
-
-        {/* Quick actions */}
-        <div className="grid grid-cols-2 gap-3 mb-6 animate-fade-in">
-          <button
-            onClick={() => navigate("/entry")}
-            className="flex flex-col items-center p-4 bg-app-primary text-white rounded-xl shadow-sm"
-          >
-            <PlusCircle className="w-6 h-6 mb-2" />
-            <span className="text-sm font-medium">New Reading</span>
-          </button>
-          <button
-            onClick={() => navigate("/history")}
-            className="flex flex-col items-center p-4 bg-white border border-app-secondary rounded-xl shadow-sm"
-          >
-            <Activity className="w-6 h-6 mb-2 text-app-primary" />
-            <span className="text-sm font-medium">View History</span>
-          </button>
-        </div>
-
-        {/* Quick links */}
-        <div className="mb-6 animate-fade-in">
-          <h3 className="text-sm font-medium mb-3">Quick Links</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center p-3 bg-white border border-app-secondary rounded-xl shadow-sm">
-              <Pill className="w-5 h-5 mr-3 text-app-primary" />
-              <span className="text-sm">Medications</span>
-            </button>
-            <button className="flex items-center p-3 bg-white border border-app-secondary rounded-xl shadow-sm">
-              <Dumbbell className="w-5 h-5 mr-3 text-app-primary" />
-              <span className="text-sm">Exercise</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Reminders */}
-        {reminders.length > 0 && (
-          <div className="mb-6 animate-fade-in">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-medium">Reminders</h3>
-              <button className="text-xs text-app-primary">View All</button>
-            </div>
-            <div className="space-y-2">
-              {reminders.map(med => (
-                <div key={med.id} className="flex items-center justify-between p-3 bg-white border border-app-secondary rounded-lg shadow-sm">
-                  <div>
-                    <p className="font-medium text-sm">{med.name}</p>
-                    <p className="text-xs text-app-muted">{med.dosage}</p>
-                  </div>
-                  <div className="flex items-center text-xs">
-                    <Clock className="w-3 h-3 mr-1 text-app-muted" />
-                    <span>{med.time}</span>
-                  </div>
+        <section className="mb-6 relative p-4 bg-app-primary/10 rounded-xl animate-fade-in">
+          <h2 className="text-lg font-medium mb-2">Latest Reading</h2>
+          
+          {latestReading ? (
+            <div className="relative">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white p-3 rounded-lg shadow-sm">
+                  <p className="text-xs text-app-muted mb-1">Value</p>
+                  <p className={`text-xl font-semibold ${
+                    latestReading.status === "high" ? "text-app-danger" : 
+                    latestReading.status === "low" ? "text-app-warning" : 
+                    "text-app-success"
+                  }`}>
+                    {latestReading.value}
+                    <span className="text-xs text-app-muted ml-1">mg/dL</span>
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent readings */}
-        <div className="mb-6 animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium">Recent Readings</h2>
-            <div className="flex space-x-2">
-              <select
-                className="text-sm p-1 rounded border border-app-secondary"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as any)}
-              >
-                <option value="all">All</option>
-                <option value="high">High</option>
-                <option value="normal">Normal</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-pulse-subtle text-app-muted">Loading...</div>
-            </div>
-          ) : filteredReadings.length === 0 ? (
-            <div className="text-center py-10 bg-app-secondary/50 rounded-lg">
-              <p className="text-app-muted mb-2">No readings found</p>
-              <button
-                onClick={() => navigate("/entry")}
-                className="text-app-primary text-sm font-medium"
-              >
-                Add your first reading
-              </button>
+                
+                <div className="bg-white p-3 rounded-lg shadow-sm">
+                  <p className="text-xs text-app-muted mb-1">Date</p>
+                  <p className="text-sm font-semibold">{latestReading.date}</p>
+                </div>
+                
+                <div className="bg-white p-3 rounded-lg shadow-sm">
+                  <p className="text-xs text-app-muted mb-1">Time</p>
+                  <p className="text-sm font-semibold">{latestReading.time}</p>
+                </div>
+              </div>
+              
+              <div className="mt-3 flex justify-between">
+                <div className="text-xs text-app-muted">
+                  <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
+                    latestReading.status === "high" ? "bg-app-danger" : 
+                    latestReading.status === "low" ? "bg-app-warning" : 
+                    "bg-app-success"
+                  }`}></span>
+                  {latestReading.status === "high" ? "High" : 
+                   latestReading.status === "low" ? "Low" : 
+                   "Normal"}
+                </div>
+                <button 
+                  className="text-xs font-medium text-app-primary"
+                  onClick={() => navigate(`/detail/${latestReading.id}`)}
+                >
+                  See Details
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredReadings.slice(0, 5).map((reading, index) => (
-                <div
-                  key={reading.id}
-                  className={cn(
-                    "bg-white p-4 rounded-lg border border-app-secondary shadow-sm",
-                    "animate-slide-up"
-                  )}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                  onClick={() => navigate(`/detail/${reading.id}`)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className={cn("text-lg font-bold", getStatusColor(reading.status))}>
-                        {reading.value} <span className="text-xs">mg/dL</span>
-                      </span>
-                      <p className="text-xs text-app-muted mt-1">{reading.testType}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center text-xs text-app-muted">
-                        <CalendarIcon className="w-3 h-3 mr-1" />
-                        {reading.date}
-                      </div>
-                      <div className="flex items-center text-xs text-app-muted mt-1">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {reading.time}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {filteredReadings.length > 5 && (
-                <button
-                  onClick={() => navigate("/history")}
-                  className="w-full py-2 text-app-primary text-sm font-medium"
-                >
-                  View all readings
-                </button>
-              )}
+            <div className="bg-white rounded-lg p-4 text-center">
+              <p className="text-app-muted mb-2">No readings recorded yet</p>
+              <button
+                className="text-sm text-app-primary font-medium"
+                onClick={() => navigate("/entry")}
+              >
+                Add Your First Reading
+              </button>
             </div>
           )}
-        </div>
+        </section>
+        
+        <section className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium">Quick Actions</h2>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              className="bg-white flex flex-col items-center justify-center p-4 rounded-xl border border-app-secondary shadow-sm animate-fade-in"
+              style={{ animationDelay: "0.1s" }}
+              onClick={() => navigate("/entry")}
+            >
+              <div className="w-10 h-10 rounded-full bg-app-primary/10 flex items-center justify-center mb-2">
+                <Plus className="w-5 h-5 text-app-primary" />
+              </div>
+              <span className="text-sm font-medium">New Reading</span>
+            </button>
+            
+            <button
+              className="bg-white flex flex-col items-center justify-center p-4 rounded-xl border border-app-secondary shadow-sm animate-fade-in"
+              style={{ animationDelay: "0.2s" }}
+              onClick={() => navigate("/history")}
+            >
+              <div className="w-10 h-10 rounded-full bg-app-primary/10 flex items-center justify-center mb-2">
+                <Activity className="w-5 h-5 text-app-primary" />
+              </div>
+              <span className="text-sm font-medium">History</span>
+            </button>
+          </div>
+        </section>
+        
+        <section className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium">Recent Trends</h2>
+            <button
+              className="text-sm text-app-primary font-medium flex items-center"
+              onClick={() => navigate("/history")}
+            >
+              View All
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            {readings.length === 0 ? (
+              <div className="bg-white rounded-lg p-4 text-center border border-app-secondary">
+                <p className="text-app-muted">No trend data available yet</p>
+              </div>
+            ) : (
+              <>
+                <div className={`bg-white p-4 rounded-lg border shadow-sm flex items-center ${
+                  hasHighReadings ? "border-app-danger/30" : "border-app-secondary"
+                } animate-fade-in`} style={{ animationDelay: "0.1s" }}>
+                  <div className={`w-8 h-8 rounded-full ${
+                    hasHighReadings ? "bg-app-danger/10" : "bg-app-secondary/20"
+                  } flex items-center justify-center mr-3`}>
+                    <TrendingUp className={`w-4 h-4 ${
+                      hasHighReadings ? "text-app-danger" : "text-app-muted"
+                    }`} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">High Readings</h3>
+                    <p className="text-sm text-app-muted">
+                      {hasHighReadings 
+                        ? "You've had high readings recently" 
+                        : "No high readings recently"}
+                    </p>
+                  </div>
+                  <span className={`text-xl font-semibold ${
+                    hasHighReadings ? "text-app-danger" : "text-app-muted"
+                  }`}>
+                    {BLOOD_SUGAR_THRESHOLDS.HIGH}+
+                  </span>
+                </div>
+                
+                <div className={`bg-white p-4 rounded-lg border shadow-sm flex items-center ${
+                  hasLowReadings ? "border-app-warning/30" : "border-app-secondary"
+                } animate-fade-in`} style={{ animationDelay: "0.2s" }}>
+                  <div className={`w-8 h-8 rounded-full ${
+                    hasLowReadings ? "bg-app-warning/10" : "bg-app-secondary/20"
+                  } flex items-center justify-center mr-3`}>
+                    <TrendingDown className={`w-4 h-4 ${
+                      hasLowReadings ? "text-app-warning" : "text-app-muted"
+                    }`} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">Low Readings</h3>
+                    <p className="text-sm text-app-muted">
+                      {hasLowReadings 
+                        ? "You've had low readings recently" 
+                        : "No low readings recently"}
+                    </p>
+                  </div>
+                  <span className={`text-xl font-semibold ${
+                    hasLowReadings ? "text-app-warning" : "text-app-muted"
+                  }`}>
+                    {BLOOD_SUGAR_THRESHOLDS.LOW}-
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+        
+        <section className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium">Care Options</h2>
+          </div>
+          
+          <div className="space-y-3">
+            <button
+              className="w-full bg-white p-4 rounded-lg border border-app-secondary shadow-sm flex items-center animate-fade-in"
+              style={{ animationDelay: "0.1s" }}
+              onClick={() => navigate("/notifications")}
+            >
+              <div className="w-10 h-10 rounded-full bg-app-primary/10 flex items-center justify-center mr-3">
+                <Bell className="w-5 h-5 text-app-primary" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-medium">Notifications</h3>
+                <p className="text-sm text-app-muted">View alerts and reminders</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-app-muted" />
+            </button>
+            
+            <button
+              className="w-full bg-white p-4 rounded-lg border border-app-secondary shadow-sm flex items-center animate-fade-in"
+              style={{ animationDelay: "0.2s" }}
+              onClick={() => navigate("/caregiver-dashboard")}
+            >
+              <div className="w-10 h-10 rounded-full bg-app-primary/10 flex items-center justify-center mr-3">
+                <Users className="w-5 h-5 text-app-primary" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-medium">Caregiver Dashboard</h3>
+                <p className="text-sm text-app-muted">Share with your care team</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-app-muted" />
+            </button>
+          </div>
+        </section>
       </main>
 
       <footer className="app-footer">

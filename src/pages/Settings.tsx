@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, User, Mail, Clock, Bell } from "lucide-react";
 import { useBloodSugar } from "@/context/BloodSugarContext";
 import { toast } from "@/components/ui/use-toast";
+import { BLOOD_SUGAR_THRESHOLDS } from "@/types";
 
 const Settings = () => {
   const navigate = useNavigate();
