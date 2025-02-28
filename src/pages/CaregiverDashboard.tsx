@@ -5,6 +5,7 @@ import { ArrowLeft, User, Calendar, Clock, MessageSquare, AlertTriangle, LogOut 
 import { useBloodSugar } from "@/context/BloodSugarContext";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
+import { BLOOD_SUGAR_THRESHOLDS } from "@/types";
 
 const CaregiverDashboard = () => {
   const navigate = useNavigate();
