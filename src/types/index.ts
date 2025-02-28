@@ -35,4 +35,12 @@ export interface UserProfile {
   email?: string;
   age?: number;
   caregiverEmail?: string;
+  notificationsEnabled?: boolean;
+  emailNotificationsEnabled?: boolean;
+}
+
+export interface EmailNotification {
+  to: string;
+  subject: string;
+  body: string;
 }

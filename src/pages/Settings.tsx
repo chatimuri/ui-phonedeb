@@ -14,7 +14,12 @@ const Settings = () => {
   const [email, setEmail] = useState(userProfile.email || "");
   const [age, setAge] = useState(userProfile.age?.toString() || "");
   const [caregiverEmail, setCaregiverEmail] = useState(userProfile.caregiverEmail || "");
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    userProfile.notificationsEnabled !== undefined ? userProfile.notificationsEnabled : true
+  );
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(
+    userProfile.emailNotificationsEnabled !== undefined ? userProfile.emailNotificationsEnabled : true
+  );
   const [shareToCaregivers, setShareToCaregivers] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,7 +29,9 @@ const Settings = () => {
       name,
       email: email || undefined,
       age: age ? parseInt(age) : undefined,
-      caregiverEmail: caregiverEmail || undefined
+      caregiverEmail: caregiverEmail || undefined,
+      notificationsEnabled,
+      emailNotificationsEnabled
     });
     
     toast({
@@ -127,6 +134,25 @@ const Settings = () => {
                   onChange={() => setShareToCaregivers(!shareToCaregivers)}
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-app-primary"></div>
+              </label>
+            </div>
+            
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="font-medium">Email Alerts to Caregiver</p>
+                <p className="text-xs text-app-muted">
+                  Send email notifications for abnormal readings
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={emailNotificationsEnabled}
+                  onChange={() => setEmailNotificationsEnabled(!emailNotificationsEnabled)}
+                  disabled={!caregiverEmail}
+                />
+                <div className={`w-11 h-6 ${!caregiverEmail ? 'bg-gray-100' : 'bg-gray-200'} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-app-primary ${!caregiverEmail ? 'opacity-50' : ''}`}></div>
               </label>
             </div>
           </div>

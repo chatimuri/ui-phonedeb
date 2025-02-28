@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { BloodSugarReading, BLOOD_SUGAR_THRESHOLDS, Medication, UserProfile } from "@/types";
+import { BloodSugarReading, BLOOD_SUGAR_THRESHOLDS, Medication, UserProfile, EmailNotification } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 
@@ -14,6 +14,7 @@ interface BloodSugarContextType {
   userProfile: UserProfile;
   updateUserProfile: (profile: UserProfile) => void;
   reminders: Medication[];
+  sendCaregiverNotification: (reading: BloodSugarReading) => Promise<boolean>;
 }
 
 const BloodSugarContext = createContext<BloodSugarContextType | undefined>(undefined);
@@ -33,7 +34,9 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: "John Doe"
+    name: "John Doe",
+    notificationsEnabled: true,
+    emailNotificationsEnabled: true
   });
 
   // Medications due today are considered reminders
@@ -102,6 +105,61 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
     return 'normal';
   };
 
+  // Function to send notification to caregiver
+  const sendCaregiverNotification = async (reading: BloodSugarReading): Promise<boolean> => {
+    if (!userProfile.caregiverEmail || !userProfile.emailNotificationsEnabled) {
+      console.log("Email notifications not enabled or no caregiver email provided");
+      return false;
+    }
+
+    try {
+      // In a real app, this would be a call to a backend service
+      // Here we're simulating the email sending process
+      console.log(`Sending email notification to caregiver: ${userProfile.caregiverEmail}`);
+      
+      const notification: EmailNotification = {
+        to: userProfile.caregiverEmail,
+        subject: `Blood Sugar Alert: ${reading.status.toUpperCase()} Reading`,
+        body: `
+          ${userProfile.name} has recorded a ${reading.status} blood sugar reading.
+          
+          Reading Details:
+          Value: ${reading.value} mg/dL
+          Date: ${reading.date}
+          Time: ${reading.time}
+          Test Type: ${reading.testType}
+          ${reading.note ? `Note: ${reading.note}` : ''}
+          
+          Please check in with them if necessary.
+        `
+      };
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Log the notification for demonstration
+      console.log("Email notification:", notification);
+      
+      // Show success toast
+      toast({
+        title: "Notification Sent",
+        description: `An alert has been sent to ${userProfile.caregiverEmail}`,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Failed to send notification:", error);
+      
+      toast({
+        title: "Notification Failed",
+        description: "Could not send the alert to the caregiver.",
+        variant: "destructive",
+      });
+      
+      return false;
+    }
+  };
+
   const addReading = (readingData: Omit<BloodSugarReading, "id" | "status">) => {
     const newReading: BloodSugarReading = {
       ...readingData,
@@ -118,12 +176,22 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
         description: "Your blood sugar reading is high.",
         variant: "destructive",
       });
+      
+      // Send notification to caregiver for high reading
+      if (userProfile.caregiverEmail && userProfile.emailNotificationsEnabled) {
+        sendCaregiverNotification(newReading);
+      }
     } else if (newReading.status === 'low') {
       toast({
         title: "Low Blood Sugar",
         description: "Your blood sugar reading is low.",
         variant: "destructive",
       });
+      
+      // Send notification to caregiver for low reading
+      if (userProfile.caregiverEmail && userProfile.emailNotificationsEnabled) {
+        sendCaregiverNotification(newReading);
+      }
     } else {
       toast({
         title: "Reading Saved",
@@ -173,7 +241,8 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
         addMedication,
         userProfile,
         updateUserProfile,
-        reminders
+        reminders,
+        sendCaregiverNotification
       }}
     >
       {children}
