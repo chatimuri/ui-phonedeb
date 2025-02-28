@@ -44,3 +44,20 @@ export interface EmailNotification {
   subject: string;
   body: string;
 }
+
+export interface Caregiver {
+  id: string;
+  email: string;
+  name: string;
+  patientIds: string[];  // IDs of patients this caregiver monitors
+  notificationPreferences: {
+    highBloodSugar: boolean;
+    lowBloodSugar: boolean;
+    missedMedications: boolean;
+  };
+}
+
+export interface CaregiverLoginCredentials {
+  email: string;
+  password: string;
+}

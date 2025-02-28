@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, User, Mail, Clock, Bell } from "lucide-react";
+import { ArrowLeft, Save, User, Mail, Clock, Bell, ExternalLink } from "lucide-react";
 import { useBloodSugar } from "@/context/BloodSugarContext";
 import { toast } from "@/components/ui/use-toast";
 import { BLOOD_SUGAR_THRESHOLDS } from "@/types";
@@ -38,6 +38,10 @@ const Settings = () => {
       title: "Settings Saved",
       description: "Your settings have been updated successfully."
     });
+  };
+
+  const navigateToCaregiverPortal = () => {
+    navigate("/caregiver-login");
   };
 
   return (
@@ -154,6 +158,20 @@ const Settings = () => {
                 />
                 <div className={`w-11 h-6 ${!caregiverEmail ? 'bg-gray-100' : 'bg-gray-200'} peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-app-primary ${!caregiverEmail ? 'opacity-50' : ''}`}></div>
               </label>
+            </div>
+            
+            <div className="mt-4">
+              <button 
+                type="button"
+                onClick={navigateToCaregiverPortal}
+                className="flex items-center justify-center w-full py-2 px-4 bg-app-secondary/20 text-app-primary rounded-lg"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Go to Caregiver Portal
+              </button>
+              <p className="text-xs text-app-muted mt-1 text-center">
+                For caregivers to access the dedicated dashboard
+              </p>
             </div>
           </div>
           

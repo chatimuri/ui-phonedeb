@@ -13,6 +13,7 @@ import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 import Notifications from "@/pages/Notifications";
 import CaregiverDashboard from "@/pages/CaregiverDashboard";
+import CaregiverLogin from "@/pages/CaregiverLogin";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/detail/:id" element={<Detail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/caregiver-login" element={<CaregiverLogin />} />
             <Route path="/caregiver-dashboard" element={<CaregiverDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
