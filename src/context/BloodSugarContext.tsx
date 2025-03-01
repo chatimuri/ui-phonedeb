@@ -112,9 +112,9 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
       return false;
     }
 
-    // Only send notifications for HIGH blood sugar readings
-    if (reading.status !== 'high') {
-      console.log("Only high blood sugar readings trigger caregiver notifications");
+    // Now sending notifications for both HIGH and LOW blood sugar readings
+    if (reading.status !== 'high' && reading.status !== 'low') {
+      console.log("Only high and low blood sugar readings trigger caregiver notifications");
       return false;
     }
 
@@ -123,11 +123,15 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
       // Here we're simulating the email sending process
       console.log(`Sending email notification to caregiver: ${userProfile.caregiverEmail}`);
       
+      // Create different email subject and body based on status
+      const subjectPrefix = reading.status === 'high' ? 'Urgent: High' : 'Alert: Low';
+      const statusMessage = reading.status === 'high' ? 'high' : 'low';
+      
       const notification: EmailNotification = {
         to: userProfile.caregiverEmail,
-        subject: `Urgent: High Blood Sugar Alert`,
+        subject: `${subjectPrefix} Blood Sugar Alert`,
         body: `
-          ${userProfile.name} has recorded a high blood sugar reading.
+          ${userProfile.name} has recorded a ${statusMessage} blood sugar reading.
           
           Reading Details:
           Value: ${reading.value} mg/dL
@@ -194,7 +198,10 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
         variant: "destructive",
       });
       
-      // No longer sending notification for low readings
+      // Now sending notification for low readings
+      if (userProfile.caregiverEmail && userProfile.emailNotificationsEnabled) {
+        sendCaregiverNotification(newReading);
+      }
     } else {
       toast({
         title: "Reading Saved",
