@@ -9,7 +9,7 @@ import emailjs from 'emailjs-com';
 // In a real app, you would store these in environment variables
 const EMAILJS_SERVICE_ID = "service_q0pizk4"; // Your EmailJS Service ID
 const EMAILJS_TEMPLATE_ID = "template_3ia8fi2"; // Your EmailJS Template ID
-const EMAILJS_PUBLIC_KEY = ""; // Your EmailJS Public Key (not your user ID)
+const EMAILJS_PUBLIC_KEY = "CjDN0tH6UXUyI6KvS"; // Your EmailJS Public Key (not your user ID)
 
 // Set this to your EmailJS public key, NOT your user ID
 // You can get this from https://dashboard.emailjs.com/admin/account
