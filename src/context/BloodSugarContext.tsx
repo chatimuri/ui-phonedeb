@@ -3,6 +3,13 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { BloodSugarReading, BLOOD_SUGAR_THRESHOLDS, Medication, UserProfile, EmailNotification } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import emailjs from 'emailjs-com';
+
+// Initialize EmailJS with your user ID
+// In a real app, you would store these in environment variables
+const EMAILJS_USER_ID = "YOUR_EMAILJS_USER_ID"; // Replace with your actual EmailJS User ID
+const EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID"; // Replace with your actual EmailJS Service ID
+const EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID"; // Replace with your actual EmailJS Template ID
 
 interface BloodSugarContextType {
   readings: BloodSugarReading[];
@@ -119,42 +126,54 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      // In a real app, this would be a call to a backend service
-      // Here we're simulating the email sending process
-      console.log(`Sending email notification to caregiver: ${userProfile.caregiverEmail}`);
-      
       // Create different email subject and body based on status
       const subjectPrefix = reading.status === 'high' ? 'Urgent: High' : 'Alert: Low';
       const statusMessage = reading.status === 'high' ? 'high' : 'low';
       
-      const notification: EmailNotification = {
-        to: userProfile.caregiverEmail,
+      const emailContent = {
+        to_email: userProfile.caregiverEmail,
         subject: `${subjectPrefix} Blood Sugar Alert`,
-        body: `
-          ${userProfile.name} has recorded a ${statusMessage} blood sugar reading.
-          
-          Reading Details:
-          Value: ${reading.value} mg/dL
-          Date: ${reading.date}
-          Time: ${reading.time}
-          Test Type: ${reading.testType}
-          ${reading.note ? `Note: ${reading.note}` : ''}
-          
-          Please check in with them as soon as possible.
-        `
+        patient_name: userProfile.name,
+        status_message: statusMessage,
+        reading_value: reading.value,
+        reading_date: reading.date,
+        reading_time: reading.time,
+        reading_type: reading.testType,
+        reading_note: reading.note || 'No additional notes',
+        from_name: "Blood Sugar Monitor App"
       };
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       // Log the notification for demonstration
-      console.log("Email notification:", notification);
+      console.log("Sending email notification to caregiver:", userProfile.caregiverEmail);
+      console.log("Email content:", emailContent);
       
-      // Show success toast
-      toast({
-        title: "Notification Sent",
-        description: `An alert has been sent to ${userProfile.caregiverEmail}`,
-      });
+      // Actually send the email using EmailJS
+      // NOTE: This will only work after you've properly configured EmailJS
+      // with your account details and created a template
+      if (EMAILJS_USER_ID !== "YOUR_EMAILJS_USER_ID") {
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          emailContent,
+          EMAILJS_USER_ID
+        );
+        
+        // Show success toast
+        toast({
+          title: "Notification Sent",
+          description: `An alert has been sent to ${userProfile.caregiverEmail}`,
+        });
+      } else {
+        console.log("EmailJS not configured. Would have sent email with:", emailContent);
+        console.log("Please replace the placeholder EmailJS credentials with your actual values");
+        
+        // Show alert about configuration
+        toast({
+          title: "Email Configuration Required",
+          description: "Email service needs to be configured with your EmailJS credentials",
+          variant: "destructive",
+        });
+      }
       
       return true;
     } catch (error) {
