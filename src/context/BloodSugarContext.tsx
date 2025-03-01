@@ -1,14 +1,19 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { BloodSugarReading, BLOOD_SUGAR_THRESHOLDS, Medication, UserProfile, EmailNotification } from "@/types";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import emailjs from 'emailjs-com';
 
-// Initialize EmailJS with your user ID
+// Initialize EmailJS with your credentials
 // In a real app, you would store these in environment variables
-const EMAILJS_USER_ID = "Granji"; // Your EmailJS User ID
 const EMAILJS_SERVICE_ID = "service_q0pizk4"; // Your EmailJS Service ID
 const EMAILJS_TEMPLATE_ID = "template_3ia8fi2"; // Your EmailJS Template ID
+const EMAILJS_PUBLIC_KEY = ""; // Your EmailJS Public Key (not your user ID)
+
+// Set this to your EmailJS public key, NOT your user ID
+// You can get this from https://dashboard.emailjs.com/admin/account
+emailjs.init(EMAILJS_PUBLIC_KEY);
 
 interface BloodSugarContextType {
   readings: BloodSugarReading[];
@@ -146,12 +151,13 @@ export const BloodSugarProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("Sending email notification to caregiver:", userProfile.caregiverEmail);
       console.log("Email content:", emailContent);
       
-      // Actually send the email using EmailJS with provided credentials
+      // Send the email using EmailJS with the service ID and template ID
+      // Note that we're not passing the public key as the third parameter 
+      // because we already initialized it with emailjs.init()
       await emailjs.send(
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
-        emailContent,
-        EMAILJS_USER_ID
+        emailContent
       );
       
       // Show success toast
